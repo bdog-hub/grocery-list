@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Smart Grocery List</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #a1c4fd, #c2e9fb);
+      display: flex;
+      justify-content: center;
+      padding-top: 50px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      display: flex;
+      justify-content: space-between;
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+      text-transform: capitalize;
+    }
+    .total {
+      text-align: right;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🛒 Grocery List</h1>
+    <input type="text" id="itemInput" placeholder="Enter item name" />
+    <input type="text" id="listName" placeholder="Name your list" />
+    <button onclick="addItem()">➕ Add Item</button>
+    <ul id="itemList"></ul>
+    <div class="total">Total: $<span id="totalPrice">0.00</span></div>
+    <hr />
+    <button onclick="saveList()">💾 Save List</button>
+    <button onclick="loadList()">📂 Load List</button>
+    <button onclick="clearList()">🧹 Clear List</button>
+  </div>
+
+  <script>
+    const priceDB = {
+      milk: 2.99, eggs: 3.49, bread: 2.29, cheese: 4.50, chicken: 6.99,
+      apple: 0.99, banana: 0.69, rice: 3.99, pasta: 2.50, cereal: 4.25,
+      water: 1.00, juice: 2.89, yogurt: 1.50, butter: 3.25, onion: 0.89,
+      potato: 0.79, orange: 1.09, lettuce: 1.49, tomato: 1.29, cucumber: 0.99,
+      spinach: 1.99, bellpepper: 1.59, broccoli: 1.89, grapes: 2.49,
+      strawberries: 3.79, blueberries: 3.99, beef: 7.99, pork: 5.99,
+      bacon: 4.99, sausage: 4.49, fish: 6.49, shrimp: 7.50, oil: 3.99,
+      flour: 2.29, sugar: 2.19, salt: 0.89, pepper: 1.19, ketchup: 2.49,
+      mustard: 1.79, mayo: 3.29, chips: 2.99, cookies: 3.19, crackers: 2.79,
+      chocolate: 1.99, icecream: 4.99, pizza: 5.99, soda: 1.29, coffee: 6.99,
+      tea: 3.49, detergent: 8.99, soap: 1.99, shampoo: 4.49, toothpaste: 3.29,
+      toiletpaper: 5.99, papertowels: 4.49, trashbags: 6.29, honey: 6.49,
+      peanutbutter: 3.89, jam: 2.99, saladmix: 3.59, mushrooms: 2.79,
+      celery: 1.69, carrots: 1.29, garlic: 0.99, lemon: 0.89, lime: 0.89,
+      coffeecream: 1.89, almondmilk: 3.19, soyamilk: 3.19, sparklingwater: 1.39,
+      energybar: 1.49, granola: 4.49, spinachbag: 2.99, tofu: 2.99, nuts: 7.99,
+      ice: 2.99, cannedbeans: 1.29, cannedcorn: 1.29, cannedtomato: 1.29
+    };
+
+    let groceryList = [];
+    let total = 0;
+
+    function addItem() {
+      const input = document.getElementById('itemInput');
+      const itemNameRaw = input.value.trim();
+      const itemName = itemNameRaw.toLowerCase();
+      if (!itemName) {
+        alert("Enter an item name.");
+        return;
+      }
+
+      let price = priceDB[itemName];
+      if (price === undefined) {
+        const userPrice = prompt(`No price found for "${itemNameRaw}". Enter a price:`);
+        price = parseFloat(userPrice);
+        if (isNaN(price) || price <= 0) {
+          alert("Invalid price entered.");
+          return;
+        }
+      }
+
+      groceryList.push({ name: itemNameRaw, price });
+      total += price;
+      input.value = "";
+      updateListDisplay();
+      console.log(`Added item: ${itemNameRaw} - $${price.toFixed(2)}`);
+    }
+
+    function updateListDisplay() {
+      const listEl = document.getElementById('itemList');
+      const totalEl = document.getElementById('totalPrice');
+      listEl.innerHTML = "";
+      groceryList.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${item.name}</span><span>$${item.price.toFixed(2)}</span>`;
+        listEl.appendChild(li);
+      });
+      totalEl.textContent = total.toFixed(2);
+      console.log(`List updated. Total: $${total.toFixed(2)}`);
+    }
+
+    function saveList() {
+      const listName = document.getElementById("listName").value.trim();
+      if (!listName) {
+        alert("Please enter a list name.");
+        return;
+      }
+      localStorage.setItem("grocery_" + listName, JSON.stringify(groceryList));
+      alert("List saved as '" + listName + "'.");
+      console.log(`Saved list "${listName}":`, groceryList);
+    }
+
+    function loadList() {
+      const listName = document.getElementById("listName").value.trim();
+      if (!listName) {
+        alert("Please enter a list name to load.");
+        return;
+      }
+      const saved = localStorage.getItem("grocery_" + listName);
+      if (!saved) {
+        alert("No list found with that name.");
+        return;
+      }
+      groceryList = JSON.parse(saved);
+      total = groceryList.reduce((sum, item) => sum + item.price, 0);
+      updateListDisplay();
+      console.log(`Loaded list "${listName}":`, groceryList);
+    }
+
+    function clearList() {
+      if (confirm("Clear the current grocery list?")) {
+        groceryList = [];
+        total = 0;
+        updateListDisplay();
+        console.log("Cleared current grocery list");
+      }
+    }
+  </script>
+</body>
+</html>
